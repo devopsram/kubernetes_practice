@@ -9,6 +9,36 @@ resource "aws_iam_policy_attachment" "attachinfrapolicies" {
   policy_arn = local.policies[count.index]
 
 }
+
+resource "aws_iam_policy" "eks_full_access" {
+  name        = "EKSFullAccessPolicy"
+  description = "Policy granting full access to EKS"
+  policy      = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action   = "eks:*"
+        Effect   = "Allow"
+        Resource = "*"
+      },
+      {
+        Action   = "iam:PassRole"
+        Effect   = "Allow"
+        Resource = "*"
+        Condition = {
+          StringEquals = {
+            "iam:PassedToService" = "eks.amazonaws.com"
+          }
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "eks_role_attach" {
+  role       = "InfraCreationRole"
+  policy_arn = aws_iam_policy.eks_full_access.arn
+}
 #filter out local zones which are not currently supported with managed node groups 
 # The below filter fetches the standard availability zones 
 
